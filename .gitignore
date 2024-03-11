@@ -2,6 +2,9 @@
 *
 
 # But not these files...
+!.github/*
+!.goreleaser.yaml
+
 !/.gitignore
 
 !*.go

@@ -1,0 +1,31 @@
+before:
+  hooks:
+    - go fmt ./...
+    - go mod tidy
+    - go mod download
+builds:
+  - id: gsc
+    main: cmd/gsc.go
+    binary: gsc
+    env:
+      - CGO_ENABLED=0
+    ldflags: -s -w -X main.versionString={{ .Tag }} -X main.buildDate={{ .Date }} -X main.buildCommit={{ .Commit }}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - builds:
+      - gsc
+    name_template: "{{ .ProjectName }}_{{ .Tag }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    wrap_in_directory: false
+    format: tar.gz
+    files:
+      - LICENSE
