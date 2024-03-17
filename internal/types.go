@@ -44,4 +44,5 @@ type Application struct {
 	Group       *int
 	Matcher     *string
 	Recursive   *bool
+	Quiet       *bool
 }

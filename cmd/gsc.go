@@ -26,6 +26,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jwalton/gchalk"
 	"github.com/pehlicd/gsc/internal"
 	"github.com/pehlicd/gsc/internal/git"
@@ -33,6 +34,7 @@ import (
 	"github.com/pehlicd/gsc/internal/logger"
 	"github.com/rs/zerolog"
 	"os"
+	"sort"
 )
 
 const helpMsg = `
@@ -56,11 +58,12 @@ var (
 	token    = fl.String("token", "", "GitLab token for authentication")
 	insecure = fl.Bool("insecure", false, "Allow insecure connection to your GitLab instance, default is false")
 
-	all         = fl.Bool("all", true, "Clone all projects, default is true")
+	all         = fl.Bool("all", false, "Clone all projects, default is true")
 	concurrency = fl.Int("concurrency", 10, "Number of concurrent workers, default is 10")
 	group       = fl.Int("group", 0, "Clone projects from the given group ID")
-	matcher     = fl.String("matcher", "", "Clone projects that match the given regex")
+	matcher     = fl.String("matcher", "", "Clone projects that match project name with the given regex")
 	recursive   = fl.Bool("recursive", false, "Clone projects recursively, default is false")
+	quiet       = fl.Bool("quiet", false, "Quiet bypasses the confirmation prompt, default is false")
 	verbose     = fl.Bool("verbose", false, "Verbose output, default is false")
 	version     = fl.Bool("version", false, "Print version information")
 
@@ -73,9 +76,13 @@ func printErrAndExit(msg string) {
 }
 
 func main() {
+	fl.Usage = func() {
+		fmt.Printf("%s\n", helpMsg)
+		fl.PrintDefaults()
+	}
+
 	if err := fl.Parse(os.Args[1:]); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
-			fmt.Printf("%s\n", helpMsg)
 			os.Exit(0)
 		}
 		printErrAndExit(err.Error())
@@ -124,6 +131,42 @@ func main() {
 	projects, err := gitlab.GetGroupProjects(gitlab.Application{Application: Application})
 	if err != nil {
 		log.Fatal().Err(err).Msgf("couldn't get projects for group with ID %d", *group)
+	}
+
+	// if no projects found, exit
+	if len(projects) == 0 {
+		log.Info().Msg("no projects found")
+		os.Exit(0)
+	}
+
+	// prompt for confirmation
+	if !*quiet {
+		log.Info().Msg("The following projects will be cloned:")
+		t := table.NewWriter()
+		t.SetOutputMirror(os.Stdout)
+		t.AppendHeader(table.Row{"ID", "Name", "Path", "HTTP URL"})
+		sort.Slice(projects, func(i, j int) bool {
+			return projects[i].ID < projects[j].ID
+		})
+		for _, project := range projects {
+			t.AppendRow([]interface{}{project.ID, project.Name, project.NameWithNamespace, project.HTTPURLToRepo})
+			t.AppendSeparator()
+		}
+		t.Render()
+		fmt.Printf("Do you want to continue? (y/n) ")
+
+		var answer string
+		_, err := fmt.Scanf("%s", &answer)
+		if err != nil {
+			log.Fatal().Err(err).Msg("couldn't read user input")
+		}
+
+		if answer != "y" && answer != "Y" {
+			fmt.Printf("%s\n", red("Aborted by user."))
+			os.Exit(0)
+		}
+
+		log.Info().Msgf("gsc will clone %d projects for you", len(projects))
 	}
 
 	if err := git.Clone(

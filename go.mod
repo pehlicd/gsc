@@ -4,6 +4,7 @@ go 1.21.5
 
 require (
 	github.com/go-git/go-git/v5 v5.11.0
+	github.com/jedib0t/go-pretty/v6 v6.5.5
 	github.com/jwalton/gchalk v1.3.0
 	github.com/rs/zerolog v1.31.0
 	github.com/schollz/progressbar/v3 v3.14.1
@@ -29,6 +30,7 @@ require (
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect

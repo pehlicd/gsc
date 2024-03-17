@@ -23,7 +23,9 @@ THE SOFTWARE.
 package gitlab
 
 import (
+	"errors"
 	"github.com/xanzy/go-gitlab"
+	"regexp"
 )
 
 func GetGroupProjects(app Application) ([]*gitlab.Project, error) {
@@ -48,6 +50,22 @@ func GetGroupProjects(app Application) ([]*gitlab.Project, error) {
 		projects = append(projects, groupProjects...)
 	}
 
+	// Filter projects by matcher
+	if *app.Matcher != "" {
+		if err := validateMatcher(*app.Matcher); err != nil {
+			return nil, errors.New("invalid regex matcher provided")
+		}
+
+		var filteredProjects []*gitlab.Project
+		for _, project := range projects {
+			if ok, _ := regexp.MatchString(*app.Matcher, project.Name); ok {
+				filteredProjects = append(filteredProjects, project)
+			}
+		}
+
+		projects = filteredProjects
+	}
+
 	return projects, nil
 }
 
@@ -63,4 +81,14 @@ func getSubgroups(app Application) []int {
 	}
 
 	return groups
+}
+
+// validateMatcher validates the provided regex matcher
+func validateMatcher(matcher string) error {
+	_, err := regexp.Compile(matcher)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
