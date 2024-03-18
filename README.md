@@ -2,6 +2,21 @@
 
 gsc is a tool to help you clone all the repositories from a Gitlab group in a way that you see the repositories in the same structure as they are in the Gitlab group.
 
+## How to install
+
+### Using Homebrew
+
+```bash
+brew tap pehlicd/tap
+brew install gsc
+```
+
+### Using go get
+
+```bash
+go install github.com/pehlicd/gsc@latest
+```
+
 ## Usage
 
 ```bash
