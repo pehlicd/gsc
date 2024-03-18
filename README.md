@@ -11,7 +11,7 @@ brew tap pehlicd/tap
 brew install gsc
 ```
 
-### Using go get
+### Using go
 
 ```bash
 go install github.com/pehlicd/gsc@latest
